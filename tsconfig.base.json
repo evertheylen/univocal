@@ -1,0 +1,50 @@
+{
+  "compilerOptions": {
+    // General stuff ..................................
+    "lib": [
+      "ES2018",
+    ],
+    "target": "ES2018",
+    "module": "NodeNext",
+    "esModuleInterop": true,
+    // Also see https://github.com/microsoft/TypeScript/issues/33079 for how "exports" field in
+    // package.json is supposed to work (and how it works in TS)
+    "moduleResolution": "NodeNext",
+    "composite": true, // enables reuse of projects
+
+    // Language settings and other assertions .........
+    "strict": true,
+    "forceConsistentCasingInFileNames": true,
+    "isolatedModules": true,
+
+    // Compilation settings ...........................
+    "sourceMap": true,
+    "declarationMap": true,
+    "importHelpers": true, // prevent extra boilerplate at the top of files
+
+    // Command behaviour ..............................
+    // why do people like to clear terminals?
+    "preserveWatchOutput": true,
+  },
+  // Make sure tsc doesn't consider this a project (?)
+  "files": [],
+  "include": [],
+}
+// Example of directory-specific tsconfig:
+// {
+//   "extends": "../tsconfig.base.json",
+//   "compilerOptions": {
+//     "rootDir": "src",
+//     "outDir": "dist",
+//   },
+//   "include": [
+//       "./src/**/*.ts"
+//   ],
+//   "references": [
+//     {"path": "../foo"},
+//     {"path": "../bar"},
+//   ]
+// }
+//
+// references don't work in a extended tsconfig.
+// Don't use baseUrl, it will mess with other packages importing this package.
