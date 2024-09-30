@@ -1,8 +1,5 @@
 packages:
   - 'core'
-  - 'sql'
-  - 'koa'
-  - 'client'
   - 'utils'
 # Avoid people publishing newer versions of our libraries on npm!
 prefer-workspace-packages: true

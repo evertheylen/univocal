@@ -2,9 +2,9 @@
   "compilerOptions": {
     // General stuff ..................................
     "lib": [
-      "ES2018",
+      "ESNext",
     ],
-    "target": "ES2018",
+    "target": "ESNext",
     "module": "NodeNext",
     "esModuleInterop": true,
     // Also see https://github.com/microsoft/TypeScript/issues/33079 for how "exports" field in
@@ -14,6 +14,7 @@
 
     // Language settings and other assertions .........
     "strict": true,
+    "exactOptionalPropertyTypes": true,
     "forceConsistentCasingInFileNames": true,
     "isolatedModules": true,
 

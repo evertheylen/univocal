@@ -1,0 +1,33 @@
+{
+  "name": "@univocal/utils",
+  "version": "1.0.0",
+  "type": "module",
+  "author": "Evert Heylen",
+  "devDependencies": {
+    "@jest/globals": "^29.7.0",
+    "@types/node": "22.7.4",
+    "jest": "^29.7.0",
+    "ts-jest": "^29.2.5",
+    "typescript": "5.6.2"
+  },
+  "dependencies": {
+    "tslib": "^2.7.0"
+  },
+  "exports": {
+    "./*": "./dist/*"
+  },
+  "scripts": {
+    "test": "tsc -b . && NODE_OPTIONS='--experimental-vm-modules' NODE_NO_WARNINGS=1 node_modules/.bin/jest"
+  },
+  "jest": {
+    "roots": [
+      "dist"
+    ],
+    "preset": "ts-jest/presets/default-esm",
+    "globals": {
+      "ts-jest": {
+        "useESM": true
+      }
+    }
+  }
+}
