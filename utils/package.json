@@ -1,9 +1,14 @@
 {
   "name": "@univocal/utils",
+  "description": "Utilities for Univocal",
   "version": "0.1.0",
   "type": "module",
   "author": "Evert Heylen",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/evertheylen/univocal.git"
+  },
   "devDependencies": {
     "@jest/globals": "^29.7.0",
     "@types/node": "22.13.14",
