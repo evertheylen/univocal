@@ -1,7 +1,7 @@
 {
   "name": "@univocal/sql",
   "description": "SQL support for Univocal",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "type": "module",
   "author": "Evert Heylen",
   "license": "MIT",
@@ -26,10 +26,16 @@
     "pg": "^8.14.1"
   },
   "peerDependenciesMeta": {
-    "@electric-sql/pglite": { "optional": true },
-    "pg": { "optional": true }
+    "@electric-sql/pglite": {
+      "optional": true
+    },
+    "pg": {
+      "optional": true
+    }
   },
-  "files": ["dist/"],
+  "files": [
+    "dist/"
+  ],
   "exports": {
     "./*": "./dist/*"
   },

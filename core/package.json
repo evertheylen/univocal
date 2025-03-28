@@ -1,7 +1,7 @@
 {
   "name": "@univocal/core",
   "description": "Core Univocal types and functions",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "type": "module",
   "author": "Evert Heylen",
   "license": "MIT",
@@ -20,17 +20,19 @@
     "@univocal/utils": "workspace:^",
     "tslib": "^2.8.1"
   },
-  "files": ["dist/"],
+  "files": [
+    "dist/"
+  ],
   "exports": {
     "./*": "./dist/*"
   },
   "scripts": {
     "prepublishOnly": "pnpm version patch",
-    "test": "tsc -b . && NODE_OPTIONS='--experimental-vm-modules' NODE_NO_WARNINGS=1 node_modules/.bin/jest"
+    "test": "tsc -b . && NODE_OPTIONS='--experimental-vm-modules' NODE_NO_WARNINGS=1 node_modules/.bin/jest --passWithNoTests"
   },
   "jest": {
     "roots": [
-      "build"
+      "dist"
     ],
     "preset": "ts-jest/presets/default-esm",
     "globals": {
