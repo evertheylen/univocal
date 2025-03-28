@@ -22,6 +22,7 @@
     "sourceMap": true,
     "declarationMap": true,
     "importHelpers": true, // prevent extra boilerplate at the top of files
+    "skipLibCheck": true,
 
     // Command behaviour ..............................
     // why do people like to clear terminals?

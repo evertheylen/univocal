@@ -1,5 +1,5 @@
 {
-  "name": "@univocal/utils",
+  "name": "@univocal/core",
   "version": "0.1.0",
   "type": "module",
   "author": "Evert Heylen",
@@ -12,6 +12,7 @@
     "typescript": "5.8.2"
   },
   "dependencies": {
+    "@univocal/utils": "workspace:^",
     "tslib": "^2.8.1"
   },
   "exports": {
@@ -22,7 +23,7 @@
   },
   "jest": {
     "roots": [
-      "dist"
+      "build"
     ],
     "preset": "ts-jest/presets/default-esm",
     "globals": {
