@@ -29,10 +29,12 @@
     "@electric-sql/pglite": { "optional": true },
     "pg": { "optional": true }
   },
+  "files": ["dist/"],
   "exports": {
     "./*": "./dist/*"
   },
   "scripts": {
+    "prepublishOnly": "pnpm version patch",
     "test": "tsc -b . && NODE_OPTIONS='--experimental-vm-modules' NODE_NO_WARNINGS=1 node_modules/.bin/jest"
   },
   "jest": {

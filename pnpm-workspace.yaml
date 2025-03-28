@@ -1,5 +1,6 @@
 packages:
   - 'core'
   - 'utils'
+  - 'sql'
 # Avoid people publishing newer versions of our libraries on npm!
 prefer-workspace-packages: true
