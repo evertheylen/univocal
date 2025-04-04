@@ -1,4 +1,4 @@
-import { describe, expect, test } from '@jest/globals';
+import { expect, test } from 'vitest';
 import { sql, SqlExpr } from './sql-expr.js'
 
 const planet = sql`[The ${3}th planet from the ${'Sun'}]`;

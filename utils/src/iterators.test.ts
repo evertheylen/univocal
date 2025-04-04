@@ -1,4 +1,4 @@
-import { describe, expect, test } from '@jest/globals';
+import { describe, expect, test } from 'vitest';
 import { zip, product, min, max, sum, iterSlices, map, forEach, filter, enumerate, findFirst, range } from './iterators.js';
 
 describe('zip', () => {

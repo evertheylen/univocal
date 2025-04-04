@@ -1,4 +1,4 @@
-import { describe, expect, test } from '@jest/globals';
+import { expect, test } from 'vitest';
 import { connect } from "./client.js";
 import { sql } from './sql-expr.js';
 

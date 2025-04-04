@@ -1,4 +1,4 @@
-import { describe, expect, test } from '@jest/globals';
+import { expect, test } from 'vitest';
 import { getRelation, getJsTypeToken, TypeRelation, isMoreSpecific, isInPrototypeChain } from "./type-token.js";
 
 class Animal {};
