@@ -1,6 +1,43 @@
 import { describe, expect, test } from '@jest/globals';
-import { defineMultiMethod, TypeNode } from './multi-method.js';
+import { createMultiMethod, TypeNode } from './multi-method.js';
 import { getJsTypeToken } from './type-token.js';
+
+
+test("MultiMethod typing", () => {
+  type Foo = {id: string};
+  type Duplicator = <X extends Foo>(x: X, howmany: (x: X) => number) => X[];
+  const f = createMultiMethod<Duplicator>();
+
+  f.define(["*", "*"], (x, h) => [x]);
+
+  // simple class so it can be used as a type token
+  class Bar {
+    constructor(public id: string, public name: string) {}
+  }
+
+  f.define([Bar, "*"], (b, howmany) => {
+    b satisfies Bar;
+
+    // HKT NEEDED: @ts-expect-error
+    howmany satisfies (x: Foo) => number;
+
+    howmany satisfies (x: Bar) => number;
+    return [b];
+  });
+
+  f({id: 'foo' as const, hello: 2}, (x) => 2) satisfies {id: 'foo', hello: number}[];
+
+  type Id = <X>(x: X) => X;
+  const id = createMultiMethod<Id>();
+
+  // should not work, obviously
+  // HKT NEEDED: @ts-expect-error
+  id.define(["string"], (x) => 123);
+
+  // should not work, as you may give it a subtype of Bar and it won't return that exact subtype
+  // HKT NEEDED: @ts-expect-error
+  id.define([Bar], (b) => new Bar('sdf', 'sdf'));
+})
 
 
 test("MultiMethod", () => {
@@ -28,21 +65,20 @@ test("MultiMethod", () => {
     isG() { return true }
   };
 
+  const mm = createMultiMethod<(a1: A, a2: A) => string>();
 
-  const mm = defineMultiMethod<[A, A], string>();
-
-  mm.add([A, A], (a, a2) => {
+  mm.define([A, A], (a, a2) => {
     a satisfies A;
     a2 satisfies A;
     return "it's A"
   });
   
-  mm.add([G, C], (g, c) => {
+  mm.define([G, C], (g, c) => {
     g satisfies G;
     c satisfies C;
     return "GC"
   });
-  mm.add([C, G], (c, g) => {
+  mm.define([C, G], (c, g) => {
     g satisfies G;
     c satisfies C;
     
@@ -54,13 +90,13 @@ test("MultiMethod", () => {
     return "CG"
   });
 
-  mm.add([B, B], x => "it's B");
-  mm.add([A, B], x => "has B");
-  mm.add([B, A], x => "also has B");
-  mm.add([F, F], x => "very specific");
+  mm.define([B, B], x => "it's B");
+  mm.define([A, B], x => "has B");
+  mm.define([B, A], x => "also has B");
+  mm.define([F, F], x => "very specific");
 
   // @ts-expect-error
-  expect(() => mm.add([A, B, C], x => "uhm").toThrow());
+  expect(() => mm.define([A, B, C], x => "uhm").toThrow());
 
   // run it thrice to test cache
   for (let i = 0; i<3; i++) {
@@ -80,9 +116,9 @@ test("MultiMethod with some stars", () => {
     isBar() { return true }
   }
 
-  const mm = defineMultiMethod<[Foo], string>();
+  const mm = createMultiMethod<(f: Foo) => string>();
 
-  mm.add(["*"], (b) => {
+  mm.define(["*"], (b) => {
     b satisfies Foo;
 
     // @ts-expect-error
@@ -90,26 +126,26 @@ test("MultiMethod with some stars", () => {
 
     return 'fallback'
   });
-  mm.add([Bar], () => 'bar');
+  mm.define([Bar], () => 'bar');
 
   expect(mm(new Foo())).toBe('fallback');
   expect(mm(new Bar())).toBe('bar');
 })
 
 test("Multimethod with array of types", () => {
-  const mm = defineMultiMethod<[any, any], string>();
+  const mm = createMultiMethod<(x: any, y: any) => string>();
 
   class Foo { isFoo() {} };
   class Bar { isBar() {} };
 
-  mm.add([[Foo, "number"], Bar], (x, y) => {
+  mm.define([[Foo, "number"], Bar], (x, y) => {
     x satisfies Foo | number;
     y satisfies Bar;
     
     return 'first'
 });
-  mm.add([[Bar, "string"], [Foo, Bar, "boolean"]], (x, y) => 'second');
-  mm.add(["boolean", [Foo, Bar]], (x, y) => 'third');
+  mm.define([[Bar, "string"], [Foo, Bar, "boolean"]], (x, y) => 'second');
+  mm.define(["boolean", [Foo, Bar]], (x, y) => 'third');
 
   expect(mm(new Foo(), new Bar())).toEqual('first');
   expect(mm('test', true)).toEqual('second');

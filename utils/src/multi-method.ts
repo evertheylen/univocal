@@ -190,10 +190,13 @@ export class _MultiMethod<
     }
   }
 
-  add<SubJsTypeTokens extends JsTypeTokenListForTypeList<Input>>(
+  define<const SubJsTypeTokens extends JsTypeTokenListForTypeList<Input>>(
     argTypes: SubJsTypeTokens,
     func: (...args: TypeListForJsTypeTokenList<SubJsTypeTokens, Input>) => Return
   ) {
+    // Many attempts have happened at making `func` follow the potentially generic type F
+    // However, it seems we need Higher-Kinded Types for that.
+
     if (this.frozen) {
       // TODO: We can support this usecase by a smarter way to invalidate cache etc
       throw new Error("MultiMethod already frozen after use, can't add new methods");
@@ -284,14 +287,27 @@ export class _MultiMethod<
   }
 }
 
-export function defineMultiMethod<Input extends TypeList, Return>() {
+
+/** 
+ * Create a multimethod following the given function type (may be generic).
+ * 
+ * To call the multimethod, just use as a function as you normally would.
+ * 
+ * To add implementations, use `.define([YourClass, "number"], (obj, num) => { ... })`.
+ * If the multimethod was created with a generic type, this is lost inside `.define`.
+ * 
+ */
+export function createMultiMethod<F extends Function>() {
+  type Input = (F extends (...args: infer Input) => any ? Input : never);
+  type Return = F extends (...args: any) => (infer Return) ? Return : never;
+
+  // @ts-ignore
   const mm = new _MultiMethod<Input, Return>();
   const f = (...args: Input) => mm.call(...args);
-  f.add = mm.add.bind(mm);
+  f.define = mm.define.bind(mm);
+
   f._underlying = mm;
-  return f;
+  // @ts-ignore
+  return f as F & {define: _MultiMethod<Input, Return>['define']};
 }
 
-// Example:
-// const f = defineMultiMethod<[X, Y], Z>();
-// f.add([SubX, "*"], (x, y) => { return new Z(); })
