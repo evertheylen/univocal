@@ -1,7 +1,8 @@
 import { assert, assertEq } from "./assert.js";
 import { enumerate, max, product, zip } from "./iterators.js";
 import { intersection } from "./sets.js";
-import { getJsTypeToken, getRelation, isMoreSpecific, JsTypeToken, JsTypeTokenFor, reprJsTypeToken, TypeForToken, TypeRelation, Value } from "./type-token.js";
+import { getPrimitiveToken, getRelation, isMoreSpecific, JsTypeToken, JsTypeTokenFor, reprJsTypeToken, TypeForToken, TypeRelation, Value } from "./type-token.js";
+import { Simple } from "./types.js";
 
 /* Some code generation utility:
 
@@ -37,6 +38,8 @@ export type MmJsTypeToken = JsTypeToken | JsTypeToken[] | "*";
 
 export type MmJsTypeTokenFor<T> = JsTypeTokenFor<T> | JsTypeTokenFor<T>[] | "*";
 
+// Star means we don't consider the token and look at the type of the argument
+// as defined by the MultiMethod's Input type parameter
 export type MmTypeForToken<T extends MmJsTypeToken | undefined, Fallback> = (
   T extends "*" ? Fallback :
   T extends (infer X extends JsTypeToken)[] ? MmTypeForToken<X, Fallback> :
@@ -231,7 +234,7 @@ export class _MultiMethod<
     this.frozen = true;
 
     // try {
-      const argJsTypeTokens = args.map(getJsTypeToken) as JsTypeToken[];
+      const argJsTypeTokens = args.map(getPrimitiveToken) as JsTypeToken[];
 
       // First try to get a cache hit
       const key = argJsTypeTokens.map(t => this.JsTypeTokenToString(t)).join(",");

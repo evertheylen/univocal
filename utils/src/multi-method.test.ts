@@ -1,6 +1,6 @@
 import { expect, test } from 'vitest';
 import { createMultiMethod, TypeNode } from './multi-method.js';
-import { getJsTypeToken } from './type-token.js';
+import { getPrimitiveToken } from './type-token.js';
 
 
 test("MultiMethod typing", () => {
@@ -138,7 +138,7 @@ test("Multimethod with array of types", () => {
   class Foo { isFoo() {} };
   class Bar { isBar() {} };
 
-  mm.define([[Foo, "number"], Bar], (x, y) => {
+  mm.define([[Foo, "real"], Bar], (x, y) => {
     x satisfies Foo | number;
     y satisfies Bar;
     
@@ -165,9 +165,9 @@ test("TypeNode", () => {
   tree.insert('null', 'is null');
   tree.insert('string', 'is string');
 
-  expect(tree.findMostSpecificSubTree(getJsTypeToken({}))?.impls[0]).toEqual('is object');
-  expect(tree.findMostSpecificSubTree(getJsTypeToken(new Foo()))?.impls[0]).toEqual('is object');
-  expect(tree.findMostSpecificSubTree(getJsTypeToken(new FooChild()))?.impls[0]).toEqual('is FooChild');
-  expect(tree.findMostSpecificSubTree(getJsTypeToken(new Bar()))?.impls[0]).toEqual('is bar');
-  expect(tree.findMostSpecificSubTree(getJsTypeToken(null))?.impls[0]).toEqual('is null');
+  expect(tree.findMostSpecificSubTree(getPrimitiveToken({}))?.impls[0]).toEqual('is object');
+  expect(tree.findMostSpecificSubTree(getPrimitiveToken(new Foo()))?.impls[0]).toEqual('is object');
+  expect(tree.findMostSpecificSubTree(getPrimitiveToken(new FooChild()))?.impls[0]).toEqual('is FooChild');
+  expect(tree.findMostSpecificSubTree(getPrimitiveToken(new Bar()))?.impls[0]).toEqual('is bar');
+  expect(tree.findMostSpecificSubTree(getPrimitiveToken(null))?.impls[0]).toEqual('is null');
 });

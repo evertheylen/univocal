@@ -1,4 +1,9 @@
 
+export type Integer = number;
+export type Real = number;
+// bigints are really separate, can't mix with numbers!
+// other primitives are builtin to JS luckily...
+
 export type Constructor<T> = (new (...args: any[]) => T);
 export type AbstractConstructor<T> = (abstract new (...args: any) => any);
 
@@ -42,3 +47,6 @@ export type UnionToIntersection<U> = (
 
 // More readable constructors when combined with Object.assign
 export type Data<T, E extends string = never> = {[K in (Exclude<keyof T & string, E>) as T[K] extends Function ? never : K]: T[K]}
+
+// can be used as key in a Map
+export type Simple = string | number | bigint | boolean | null | undefined;
