@@ -1,20 +1,12 @@
-import { isEqual } from "./equal.js";
-import { hash } from "./hash.js";
+import { _maybeHash, NativeHashable, SetBucket } from "./set.js";
 
 
-class Bucket<K, V> {
+class Bucket<K, V> extends SetBucket<K> {
   constructor(
-    public keys: K[] = [],
+    keys: K[] = [],
     public values: V[] = []
-  ) {}
-
-  findIndex(key: K) {
-    for (let i=0; i<this.keys.length; i++) {
-      if (isEqual(this.keys[i], key)) {
-        return i;
-      }
-    }
-    return null;
+  ) {
+    super(keys);
   }
 
   get(key: K): V | undefined {
@@ -31,14 +23,6 @@ class Bucket<K, V> {
     } else {
       return false;
     }
-  }
-
-  get length() {
-    return this.keys.length;
-  }
-
-  has(key: K) {
-    return this.findIndex(key) !== null;
   }
 
   set(key: K, val: V) {
@@ -62,7 +46,6 @@ class Bucket<K, V> {
   }
 }
 
-type NativeMapCanHash = string | number | boolean | bigint | undefined;
 
 /** 
  * Map that can take any key. Based on `isEqual` and `hash`. It is your responsibility
@@ -70,19 +53,12 @@ type NativeMapCanHash = string | number | boolean | bigint | undefined;
  */
 export class UvMap<K, V> implements Map<K, V> {
   // can't store values directly as we need Bucket to keep track of the original key
-  protected rootMap = new Map<NativeMapCanHash, Bucket<K,V>>();
+  protected rootMap = new Map<NativeHashable, Bucket<K,V>>();
   protected _size: number = 0;
 
-  constructor() {}
-
-  protected _makeKey(key: K): NativeMapCanHash  {
-    switch (typeof key) {
-      case 'function':
-      case 'object':
-      case 'symbol':
-        return hash(key);
-      default:
-        return key as NativeMapCanHash;
+  constructor(iterable?: Iterable<[K, V]>) {
+    if (iterable) {
+      for (const [k, v] of iterable) this.set(k, v);
     }
   }
 
@@ -92,7 +68,7 @@ export class UvMap<K, V> implements Map<K, V> {
   }
 
   delete(key: K): boolean {
-    const hkey = this._makeKey(key);
+    const hkey = _maybeHash(key);
     const bucket = this.rootMap.get(hkey);
     if (bucket === undefined) return false;
 
@@ -120,21 +96,21 @@ export class UvMap<K, V> implements Map<K, V> {
   }
 
   get(key: K): V | undefined {
-    const hkey = this._makeKey(key);
+    const hkey = _maybeHash(key);
     const bucket = this.rootMap.get(hkey);
     if (bucket === undefined) return undefined;
     return bucket.get(key);
   }
 
   has(key: K): boolean {
-    const hkey = this._makeKey(key);
+    const hkey = _maybeHash(key);
     const bucket = this.rootMap.get(hkey);
     if (bucket === undefined) return false;
     return bucket.has(key);
   }
 
   set(key: K, value: V): this {
-    const hkey = this._makeKey(key);
+    const hkey = _maybeHash(key);
     const bucket = this.rootMap.get(hkey);
     if (bucket === undefined) {
       this.rootMap.set(hkey, new Bucket([key], [value]));
