@@ -1,16 +1,20 @@
 import { expect, test } from "vitest";
 import { hash } from "./hash.js";
 
-test("hash", () => {
+test("hash simple stuff", () => {
+  expect(hash(123)).toEqual(hash(123));
+  expect(hash({hello: 'mars'})).toEqual(hash({hello: 'mars'}));
+})
+
+test("hash complex objects", () => {
   const func = () => 5;
   const sym = Symbol('sdfsdf');
 
-  expect(hash(123)).toEqual(hash(123));
-  expect(hash({hello: 'mars'})).toEqual(hash({hello: 'mars'}));
-
   const x = hash({wow: ['quite', 123n, false], this: {[sym]: [Object.prototype, null, undefined], func}});
   const x2 = hash({wow: ['quite', 123n, false], this: {[sym]: [Object.prototype, null, undefined], func}});
+  // note 'quite' -> 'quit'
   const y = hash({wow: ['qujte', 123n, false], this: {[sym]: [Object.prototype, null, undefined], func}});
+  
   expect(x).toEqual(x2);
   expect(x).not.toEqual(y);
 });

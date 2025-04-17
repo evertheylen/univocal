@@ -2,10 +2,13 @@ import time
 import random
 import string
 from dataclasses import dataclass
+from copy import deepcopy
 
 @dataclass(frozen=True)
-class NameObject:
-    name: str
+class SomeObject:
+    a: str
+    b: int
+    c: list
 
 def generate_random_strings(amount, length):
     strings = []
@@ -27,7 +30,16 @@ def benchmark(name, func):
 
 def run_benchmarks():
     amount = 100_000
-    strings = generate_random_strings(amount, 100)
+    strings = generate_random_strings(amount, 50)
+    objects = []
+    for s in strings:
+        objects.append(SomeObject(
+            a=s[:10],
+            b=ord(s[11]),
+            c=(s[11:20], (s[20:30],), s[30:])
+        ))
+    
+    objects_copied = deepcopy(objects)
 
     results = []
 
@@ -43,11 +55,11 @@ def run_benchmarks():
 
     def dict_objects_test():
         m = {}
-        for i, s in enumerate(strings):
-            m[NameObject(name=s)] = i
+        for i, o in enumerate(objects):
+            m[o] = i
 
-        for i in range(len(strings) - 1, 0, -1):
-            assert m[NameObject(name=strings[i])] == i
+        for i, o in reversed(list(enumerate(objects_copied))):
+            assert m[o] == i
 
     results.append(benchmark("dict objects", dict_objects_test))
 

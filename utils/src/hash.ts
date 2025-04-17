@@ -8,7 +8,75 @@ for (let i=0; i < 256; i++) {
   hl[i] = ((i >> 4) & 15).toString(16) + (i & 15).toString(16);
 }
 
-function _hash64_1a_fast_utf(str: string){
+function makeFnv1aHasher () {
+  let t0=0, v0=0x2325, t1=0, v1=0x8422, t2=0, v2=0x9ce4, t3=0, v3=0xcbf2;
+  let i: number, c, l;
+
+  const ingest11Bits = (c: number) => {
+    // small part of below
+    if (c < 128) {
+      v0^=c;
+    } else {
+      v0^=(c>>6)|192;
+      t0=v0*435;t1=v1*435;t2=v2*435;t3=v3*435;
+      t2+=v0<<8;t3+=v1<<8;
+      t1+=t0>>>16;v0=t0&65535;t2+=t1>>>16;v1=t1&65535;v3=(t3+(t2>>>16))&65535;v2=t2&65535;
+      v0^=(c&63)|128;
+    }
+  }
+
+  const ingestStr = (str: string) => {
+    l = str.length;
+    for (i = 0; i < l; i++) {
+      c = str.charCodeAt(i);
+      if (c < 128) {
+        v0^=c;
+      } else if (c < 2048) {
+        v0^=(c>>6)|192;
+        t0=v0*435;t1=v1*435;t2=v2*435;t3=v3*435;
+        t2+=v0<<8;t3+=v1<<8;
+        t1+=t0>>>16;v0=t0&65535;t2+=t1>>>16;v1=t1&65535;v3=(t3+(t2>>>16))&65535;v2=t2&65535;
+        v0^=(c&63)|128;
+      } else if (((c&64512)==55296)&&(i+1)<l&&((str.charCodeAt(i+1)&64512)==56320)) {
+        c=65536+((c&1023)<<10)+(str.charCodeAt(++i)&1023);
+        v0^=(c>>18)|240;
+        t0=v0*435;t1=v1*435;t2=v2*435;t3=v3*435;
+        t2+=v0<<8;t3+=v1<<8;
+        t1+=t0>>>16;v0=t0&65535;t2+=t1>>>16;v1=t1&65535;v3=(t3+(t2>>>16))&65535;v2=t2&65535;
+        v0^=((c>>12)&63)|128;
+        t0=v0*435;t1=v1*435;t2=v2*435;t3=v3*435;
+        t2+=v0<<8;t3+=v1<<8;
+        t1+=t0>>>16;v0=t0&65535;t2+=t1>>>16;v1=t1&65535;v3=(t3+(t2>>>16))&65535;v2=t2&65535;
+        v0^=((c>>6)&63)|128;
+        t0=v0*435;t1=v1*435;t2=v2*435;t3=v3*435;
+        t2+=v0<<8;t3+=v1<<8;
+        t1+=t0>>>16;v0=t0&65535;t2+=t1>>>16;v1=t1&65535;v3=(t3+(t2>>>16))&65535;v2=t2&65535;
+        v0^=(c&63)|128;
+      } else {
+        v0^=(c>>12)|224;
+        t0=v0*435;t1=v1*435;t2=v2*435;t3=v3*435;
+        t2+=v0<<8;t3+=v1<<8;
+        t1+=t0>>>16;v0=t0&65535;t2+=t1>>>16;v1=t1&65535;v3=(t3+(t2>>>16))&65535;v2=t2&65535;
+        v0^=((c>>6)&63)|128;
+        t0=v0*435;t1=v1*435;t2=v2*435;t3=v3*435;
+        t2+=v0<<8;t3+=v1<<8;
+        t1+=t0>>>16;v0=t0&65535;t2+=t1>>>16;v1=t1&65535;v3=(t3+(t2>>>16))&65535;v2=t2&65535;
+        v0^=(c&63)|128;
+      }
+      t0=v0*435;t1=v1*435;t2=v2*435;t3=v3*435;
+      t2+=v0<<8;t3+=v1<<8;
+      t1+=t0>>>16;v0=t0&65535;t2+=t1>>>16;v1=t1&65535;v3=(t3+(t2>>>16))&65535;v2=t2&65535;
+    }
+  }
+
+  const getHash = () => {
+    return hl[v3>>8]+hl[v3&255]+hl[v2>>8]+hl[v2&255]+hl[v1>>8]+hl[v1&255]+hl[v0>>8]+hl[v0&255];
+  }
+
+  return { ingest11Bits, ingestStr, getHash };
+}
+
+export function _hash64_1a_fast_utf(str: string){
   var c,i,l=str.length,t0=0,v0=0x2325,t1=0,v1=0x8422,t2=0,v2=0x9ce4,t3=0,v3=0xcbf2;
 
   for (i = 0; i < l; i++) {
@@ -55,47 +123,95 @@ function _hash64_1a_fast_utf(str: string){
   return hl[v3>>8]+hl[v3&255]+hl[v2>>8]+hl[v2&255]+hl[v1>>8]+hl[v1&255]+hl[v0>>8]+hl[v0&255];
 }
 
-function stableOwnKeys(obj: object) {
-  return [
-    ...Object.getOwnPropertyNames(obj).toSorted(),
-    ...Object.getOwnPropertySymbols(obj).sort((a, b) => getObjectId(a).localeCompare(getObjectId(b)))
-  ];
-}
+
+const PRIMES = {
+  true: 947,
+  false: 1657,
+  undefined: 1877,
+  null: 1949,
+  startObj: 1069,
+  endObj: 457,
+  protoObj: 1549,
+  nextProp: 757,
+  startArray: 1237,
+  endArray: 1123,
+};
 
 
-export function hash(obj: any): string {
+function _hash(obj: any, hasher: ReturnType<typeof makeFnv1aHasher>) {
   switch (typeof obj) {
-    case 'boolean': return obj ? '[' : ']';
+    case 'boolean':
+      hasher.ingest11Bits(obj ? PRIMES.true : PRIMES.false);
+      break;
+
     case 'number':
-    case 'bigint': return _hash64_1a_fast_utf(obj.toString(36));
-    case 'undefined': return '#';
-    case 'string': return _hash64_1a_fast_utf(obj);
+      if (obj < 2048) {
+        hasher.ingest11Bits(obj);
+        break
+      }
+
+    case 'bigint':  // or larger number
+      hasher.ingestStr(obj.toString(36));
+      break;
+    
+    case 'undefined':
+      hasher.ingest11Bits(PRIMES.undefined);
+      break;
+
+    case 'string':
+      hasher.ingestStr(obj);
+      break;
 
     case 'function':
     case 'symbol':
-      return getObjectId(obj);
+      hasher.ingestStr(getObjectId(obj));
+      break;
     
     default:
-      if (obj === null) return '@';
-      let s = '{';
+      if (obj === null) {
+        hasher.ingest11Bits(PRIMES.null);
+        break;
+      }
+
       const proto = Object.getPrototypeOf(obj);
+      // TODO: we don't support weird array hacks (a = []; a.foo = 'bar'; )
+      if (proto === Array.prototype) {
+        hasher.ingest11Bits(PRIMES.startArray);
+        for (const el of obj) {
+          _hash(el, hasher);
+          hasher.ingest11Bits(PRIMES.nextProp);
+        }
+        hasher.ingest11Bits(PRIMES.endArray);
+        break;
+      }
+
+      hasher.ingest11Bits(PRIMES.startObj);
       if (proto !== Object.prototype) {
         // assuming prototypes are not to be serialized per keys
-        s += getObjectId(proto);
-        s += '!';
+        hasher.ingestStr(getObjectId(proto));
+        hasher.ingest11Bits(PRIMES.protoObj);
       }
 
-      const keys = Reflect.ownKeys(obj);
-      const keysWithHashes = keys.map(k => [k, hash(k)] as const);
-      keysWithHashes.sort(([a, aHash], [b, bHash]) => aHash.localeCompare(bHash));
-      
-      for (const [k, kHash] of keysWithHashes) {
-        s += hash(k);
-        s += hash(obj[k]);
-        s += ',';
+      // string keys, then symbols
+      for (const key of Object.getOwnPropertyNames(obj).toSorted()) {
+        hasher.ingestStr(key);
+        _hash(obj[key], hasher);
+        hasher.ingest11Bits(PRIMES.nextProp);
       }
 
-      s += '}';
-      return _hash64_1a_fast_utf(s);
+      // symbol keys
+      for (const key of Object.getOwnPropertySymbols(obj).map(getObjectId).toSorted()) {
+        hasher.ingestStr(key);
+        _hash(obj[key], hasher);
+        hasher.ingest11Bits(PRIMES.nextProp);
+      }
+
+      hasher.ingest11Bits(PRIMES.endObj);
   }
+}
+
+export function hash(obj: any) {
+  const hasher = makeFnv1aHasher();
+  _hash(obj, hasher);
+  return hasher.getHash();
 }
