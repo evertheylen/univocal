@@ -227,5 +227,19 @@ describe("isEqual", () => {
     expect(isEqual({ n: 1 }, { n: 1n })).toBe(false);
   });
 
+  it("considers objects with same properties in different order as equal", () => {
+    const obj1 = { a: 1, b: 2, c: 3 };
+    const obj2 = { c: 3, b: 2, a: 1 };
+  
+    expect(isEqual(obj1, obj2)).toBe(true);
+  });
+
+  it("considers nested objects with different property order as equal", () => {
+    const obj1 = { a: { x: 1, y: 2 }, b: [3, 4] };
+    const obj2 = { b: [3, 4], a: { y: 2, x: 1 } };
+  
+    expect(isEqual(obj1, obj2)).toBe(true);
+  });
+  
 });
 
