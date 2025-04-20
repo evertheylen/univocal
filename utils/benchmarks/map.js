@@ -93,6 +93,7 @@ console.table(bench.table((task) => ({
     3. node, UvMap with strings:  ~0.035s
     4. python, dict with objects:  ~0.077s
     5. node, UvMap with objects:  ~0.39s
+    6. node, UvMap with objects - old implementation without hasher:  ~1.20
 
 Node = v23.9.0
 Python = 3.13.2
