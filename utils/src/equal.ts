@@ -1,4 +1,3 @@
-import { getObjectId } from "./object-id.js";
 
 const equalityCheckFunctions = new Map<any, (a: any, b: any) => boolean>();
 

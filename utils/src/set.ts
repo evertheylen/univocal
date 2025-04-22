@@ -61,8 +61,11 @@ export class UvSet<T> implements Set<T>{
   protected rootMap = new Map<NativeHashable, SetBucket<T>>();
   protected _size: number = 0;
 
-  constructor(iterable?: Iterable<T>) {
-    if (iterable) {
+  constructor(iterable?: Iterable<T> | UvSet<T>) {
+    if (iterable instanceof UvSet) {
+      this.rootMap = new Map(iterable.rootMap);
+      this._size = iterable._size;
+    } else if (iterable) {
       for (const item of iterable) this.add(item);
     }
   }

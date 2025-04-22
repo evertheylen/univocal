@@ -10,23 +10,31 @@ import { VerificationContext, VerificationStatus } from "../verification.js";
 //   - [ ] make type tree thingy
 //   - [ ] make Union!
 
-class Call<Args extends any[], Value, Returns> {
+type ConstrainOperator = '=' | '!=' | '<' | '<=' | '>' | '>=';
+
+export class Call<Args extends any[], Value, Returns> {
   constructor(
     public func: (...args: [...Args, Value]) => Returns,
     public args: Args,
-    public op: '=' | '<' | '<=' | '>' | '>=',
+    public op: ConstrainOperator,
     public compareValue: Returns,
     public message?: string
   ) {}
 }
 
-export type AnyCall = Call<any[], any, any>;
+export type AnyCall = {
+  func: Function,
+  args: any[],
+  op: ConstrainOperator,
+  compareValue: any,
+  message?: string | undefined
+};
 
-class And {
+export class And {
   constructor(public conjuncts: (AnyCall | Or)[]) {}
 }
 
-class Or {
+export class Or {
   constructor(public disjuncts: (AnyCall | And)[]) {}
 }
 
@@ -36,10 +44,10 @@ class Or {
 export type Constraint = And | Or | AnyCall;
 
 export const constrain = {
-  call: <Args extends any[], Value, Returns>(
+  call: <const Args extends any[], Value, Returns>(
     func: (...args: [...Args, Value]) => Returns,
     args: Args,
-    op: '=' | '<' | '<=' | '>' | '>=',
+    op: ConstrainOperator,
     compareValue: Returns,
     message?: string
   ) => new Call<Args, Value, Returns>(func, args, op, compareValue, message),

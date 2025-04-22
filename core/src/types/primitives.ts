@@ -1,131 +1,97 @@
 import { Integer, Real } from "@univocal/utils/types.js";
-import { VerificationContext, VerificationProblem, VerificationStatus } from "../verification.js";
-import { Type } from "./base.js";
+import { constrain, Constraint, Type } from "./base.js";
+import { LiteralType } from "./literal.js";
+import { getTypeof, identity, isInteger, matchesRegex, strLength } from "./constraint-funcs.js";
 
-export class NullType implements Type<null> {
-  verifyValue(val: null, ctx: VerificationContext): VerificationStatus {
-    return ctx.check(val === null, "not null");
-  }
+export const NullType = new LiteralType(null);
 
-  getTokens() { return ['null' as const] }
-
-  static simple = new NullType();
-}
-
-
-export class UndefinedType implements Type<undefined> {
-  verifyValue(val: undefined, ctx: VerificationContext): VerificationStatus {
-    return ctx.check(val === undefined, "not undefined");
-  }
-
-  getTokens() { return ['undefined' as const] }
-
-  static simple = new UndefinedType();
-}
+export const UndefinedType = new LiteralType(undefined);
 
 
 export class RealType implements Type<Real> {
-  constructor(public min: Real | null = null, public max: Real | null = null) {}
+  constraint: Constraint;
 
-  verifyValue(val: Real, ctx: VerificationContext): VerificationStatus {
-    if (typeof val === 'number') {
-      return VerificationStatus.OK.andAlso(
-        ctx.check(this.min === null || val >= this.min, `lower than ${this.min}`),
-        ctx.check(this.max === null || val <= this.max, `higher than ${this.max}`),
-      );
-    } else {
-      return new VerificationStatus([new VerificationProblem(ctx, 'not a number')])
+  constructor(public min?: Real, public includeMin?: boolean, public max?: Real, public includeMax?: boolean) {
+    this.constraint = constrain.and(
+      constrain.call(getTypeof, [], '=', 'number'),
+    );
+
+    if (this.min !== undefined) {
+      this.constraint.conjuncts.push(constrain.call(identity, [], this.includeMin ? '>=' : '>', this.min))
+    }
+
+    if (this.max !== undefined) {
+      this.constraint.conjuncts.push(constrain.call(identity, [], this.includeMax ? '<=' : '<', this.max))
     }
   }
 
-  getTokens() { return ['real' as const] }
-
-  static simple = new RealType();
-  //static maybe = makeUnion(NullDefinition.simple, FloatDefinition.simple);
+  static all = new RealType();
+  static positive = new RealType(0, true);
+  static negative = new RealType(undefined, undefined, 0, true);
 }
 
 export class IntegerType implements Type<Integer> {
-  constructor(public min: Integer | null = null, public max: Integer | null = null) {}
+  constraint: Constraint;
 
-  verifyValue(val: Integer, ctx: VerificationContext): VerificationStatus {
-    if (typeof val === 'number' || typeof val === 'bigint') {
-      return VerificationStatus.OK.andAlso(
-        ctx.check(this.min === null || val >= this.min, `lower than ${this.min}`),
-        ctx.check(this.max === null || val <= this.max, `higher than ${this.max}`),
-      );
-    } else {
-      return new VerificationStatus([new VerificationProblem(ctx, 'not a number')])
+  // always inclusive!
+  constructor(public min?: Integer, public max?: Integer) {
+    this.constraint = constrain.and(
+      constrain.call(getTypeof, [], '=', 'number'),
+      constrain.call(isInteger, [], '=', true)
+    );
+
+    if (this.min !== undefined) {
+      this.constraint.conjuncts.push(constrain.call(identity, [], '>=', this.min))
+    }
+
+    if (this.max !== undefined) {
+      this.constraint.conjuncts.push(constrain.call(identity, [], '<=', this.max))
     }
   }
-
-  getTokens() { return ['int' as const] }
 
   static all = new IntegerType();
-  static positive = new IntegerType(0);
-  static negative = new IntegerType(null, 0);
-  //static maybe = makeUnion(NullDefinition.simple, FloatDefinition.simple);
+  static positive = new IntegerType(0, undefined);
+  static negative = new IntegerType(undefined, 0);
 }
 
-// export class IntegerDefinition extends FloatDefinition {
-//   verifyValue(val: number, ctx: VerificationContext, registry: Registry): VerificationStatus {
-//     const numOk = super.verifyValue(val, ctx, registry);
-//     return numOk.andAlso(ctx.check(Number.isInteger(val), 'not an integer'))
-//   }
-
-//   static simple = new IntegerDefinition();
-// }
 
 export class StringType implements Type<string> {
-  constructor(public minLen: number | null = null, public maxLen: number | null = null) {}
+  constraint: Constraint;
 
-  verifyValue(val: string, ctx: VerificationContext): VerificationStatus {
-    if (typeof val === 'string') {
-      return VerificationStatus.OK.andAlso(
-        ctx.check(this.minLen === null || val.length >= this.minLen, `shorter than ${this.minLen}`),
-        ctx.check(this.maxLen === null || val.length <= this.maxLen, `higher than ${this.maxLen}`),
-      );
-    } else {
-      return new VerificationStatus([new VerificationProblem(ctx, 'not a string')])
+  // lengths are inclusive!
+  constructor(
+    public minLen?: number,
+    public maxLen?: number,
+    public regex?: RegExp
+  ) {
+    this.constraint = constrain.and(
+      constrain.call(getTypeof, [], '=', 'string'),
+    )
+
+    if (this.minLen !== undefined) {
+      this.constraint.conjuncts.push(constrain.call(strLength, [], '>=', this.minLen));
+    }
+
+    if (this.maxLen !== undefined) {
+      this.constraint.conjuncts.push(constrain.call(strLength, [], '<=', this.maxLen));
+    }
+
+    if (this.regex !== undefined) {
+      this.constraint.conjuncts.push(constrain.call(matchesRegex, [this.regex], '=', true));
     }
   }
 
-  getTokens() { return ['string' as const] }
-
-  static simple = new StringType();
-  //static maybe = makeUnion(NullDefinition.simple, StringDefinition.simple);
+  static all = new StringType();
+  static hundred = new StringType(undefined, 100);
+  static thousand = new StringType(undefined, 1000);
+  static email = new StringType(4, 512, /^[\p{L}\p{N}._%+-]+@[\p{L}\p{N}.-]+\.[\p{L}]{2,}$/u);
 }
 
 
-export class BooleanType implements Type<boolean> {
-  verifyValue(val: boolean, ctx: VerificationContext): VerificationStatus {
-    return ctx.check(typeof val === 'boolean', 'not a boolean');
-  }
-
-  getTokens() { return ['boolean' as const] }
-
-  static simple = new BooleanType();
-  //static maybe = makeUnion(NullDefinition.simple, BooleanDefinition.simple);
-}
+export const TrueType = new LiteralType(true);
+export const FalseType = new LiteralType(false);
+// TODO
+//export const BooleanType = union(TrueType, FalseType);
 
 
-export class DateType implements Type<Date> {
-  verifyValue(value: Date, ctx: VerificationContext) {
-    return ctx.check(value instanceof Date, "Expected Date");
-  }
 
-  getTokens() { return [Date] }
-
-  static simple = new DateType();
-  //static maybe = makeUnion(NullDefinition.simple, DateDefinition.simple);
-}
-
-
-export class VoidType implements Type<void> {
-  verifyValue(val: void, ctx: VerificationContext): VerificationStatus {
-    return VerificationStatus.OK;
-  }
-
-  getTokens() { return ["undefined" as const] }
-
-  static simple = new VoidType();
-}
