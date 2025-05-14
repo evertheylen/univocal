@@ -8,6 +8,8 @@ export interface PgClient {
   query(expr: SqlExpr, opts?: {log?: boolean}): Promise<any[]>
 
   transaction<T>(func: (client: PgClient) => Promise<T>): Promise<T>
+
+  isInTransaction(): boolean
 }
 
 

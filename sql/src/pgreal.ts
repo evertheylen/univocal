@@ -38,6 +38,10 @@ export class PgFullPool implements PgClient {
     return pgFullQuery(this.connection, expr, opts)
   }
 
+  isInTransaction(): boolean {
+    return false;
+  }
+
   async transaction<T>(func: (client: PgClient) => Promise<T>, opts?: {readonly?: boolean}): Promise<T> {
     const poolClient = await this.connection.connect();
     await poolClient.query('BEGIN;');
@@ -69,6 +73,10 @@ export class PgFullPoolTransactionClient implements PgClient {
   async transaction<T>(func: (client: PgClient) => Promise<T>): Promise<T> {
     console.warn("Nested transactions are not supported!");
     return await func(this);
+  }
+
+  isInTransaction(): boolean {
+    return true;
   }
 }
 
@@ -106,6 +114,10 @@ export class PgFullClient implements PgClient {
       this.inTransaction = false;
     }
   }
+
+  isInTransaction(): boolean {
+    return false;
+  }
 }
 
 export class PgFullTransactionClient implements PgClient {
@@ -120,5 +132,9 @@ export class PgFullTransactionClient implements PgClient {
   async transaction<T>(func: (client: PgClient) => Promise<T>): Promise<T> {
     console.warn("Nested transactions are not supported!");
     return await func(this);
+  }
+
+  isInTransaction(): boolean {
+    return true;
   }
 }

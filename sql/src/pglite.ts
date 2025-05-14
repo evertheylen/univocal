@@ -32,6 +32,10 @@ export class PgLiteClient implements PgClient {
   async transaction<T>(func: (client: PgClient) => Promise<T>): Promise<T> {
     return this.pgLite.transaction((tx) => func(new PgLiteTransactionClient(tx)));
   }
+
+  isInTransaction(): boolean {
+    return this.pgLite.isInTransaction();
+  }
 }
 
 export class PgLiteTransactionClient implements PgClient {
@@ -44,5 +48,9 @@ export class PgLiteTransactionClient implements PgClient {
   async transaction<T>(func: (client: PgClient) => Promise<T>): Promise<T> {
     console.warn("Nested transactions are not supported!");
     return await func(this);
+  }
+
+  isInTransaction(): boolean {
+    return true;
   }
 }
