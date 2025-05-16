@@ -12,6 +12,14 @@ export interface PgClient {
   isInTransaction(): boolean
 }
 
+export function maybeTransaction<T>(client: PgClient, func: (client: PgClient) => Promise<T>): Promise<T> {
+  if (client.isInTransaction()) {
+    return func(client);
+  } else {
+    return client.transaction(func)
+  }
+}
+
 
 export async function connect(url: string | URL, opts?: {
   lite?: pglite.PGliteOptions,
