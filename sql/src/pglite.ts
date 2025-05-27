@@ -1,6 +1,6 @@
 import type * as pglite from '@electric-sql/pglite';
 
-import type { PgClient } from './client.js';
+import type { Endable, PgClient } from './client.js';
 import { SqlExpr } from './sql-expr.js';
 
 async function pgLiteQuery(client: Pick<pglite.PGliteInterface, 'query'>, expr: SqlExpr, opts?: { log?: boolean }) {
@@ -22,7 +22,7 @@ async function pgLiteQuery(client: Pick<pglite.PGliteInterface, 'query'>, expr: 
   return res.rows;
 }
 
-export class PgLiteClient implements PgClient {
+export class PgLiteClient implements PgClient, Endable {
   constructor(public pgLite: pglite.PGlite) {}
 
   query(expr: SqlExpr, opts?: { log?: boolean; }): Promise<any[]> {
@@ -35,6 +35,10 @@ export class PgLiteClient implements PgClient {
 
   isInTransaction(): boolean {
     return this.pgLite.isInTransaction();
+  }
+
+  end(): Promise<void> {
+    return this.pgLite.close();
   }
 }
 

@@ -1,5 +1,5 @@
 import type pgfull from "pg";
-import type { PgClient } from "./client.js";
+import type { Endable, PgClient } from "./client.js";
 import { SqlExpr } from "./sql-expr.js";
 
 async function pgFullQuery(pg: Pick<pgfull.ClientBase, 'query'>, expr: SqlExpr, opts?: { log?: boolean; }) {
@@ -29,7 +29,7 @@ async function pgFullQuery(pg: Pick<pgfull.ClientBase, 'query'>, expr: SqlExpr, 
   return res.rows;
 }
 
-export class PgFullPool implements PgClient {
+export class PgFullPool implements PgClient, Endable {
   constructor(
     public connection: pgfull.Pool
   ) {}
@@ -59,6 +59,10 @@ export class PgFullPool implements PgClient {
       poolClient.release();
     }
   }
+
+  end(): Promise<void> {
+    return this.end();
+  }
 }
 
 export class PgFullPoolTransactionClient implements PgClient {
@@ -80,7 +84,7 @@ export class PgFullPoolTransactionClient implements PgClient {
   }
 }
 
-export class PgFullClient implements PgClient {
+export class PgFullClient implements PgClient, Endable {
   constructor(
     public connection: pgfull.Client
   ) {}
@@ -117,6 +121,10 @@ export class PgFullClient implements PgClient {
 
   isInTransaction(): boolean {
     return false;
+  }
+
+  end(): Promise<void> {
+    return this.connection.end();
   }
 }
 

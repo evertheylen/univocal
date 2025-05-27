@@ -12,6 +12,10 @@ export interface PgClient {
   isInTransaction(): boolean
 }
 
+export interface Endable {
+  end(): Promise<void>
+}
+
 export function maybeTransaction<T>(client: PgClient, func: (client: PgClient) => Promise<T>): Promise<T> {
   if (client.isInTransaction()) {
     return func(client);
@@ -24,7 +28,7 @@ export function maybeTransaction<T>(client: PgClient, func: (client: PgClient) =
 export async function connect(url: string | URL, opts?: {
   lite?: pglite.PGliteOptions,
   pool?: pgfull.PoolConfig | false
-}) {
+}): Promise<PgClient & Endable> {
   if (!(url instanceof URL)) {
     url = new URL(url);
   }
