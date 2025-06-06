@@ -122,6 +122,23 @@ export class UvMap<K, V> implements Map<K, V> {
     return this;
   }
 
+  setdefault(key: K, defaultValue: V): V {
+    const hkey = _maybeHash(key);
+    const bucket = this.rootMap.get(hkey);
+    if (bucket === undefined) {
+      this.rootMap.set(hkey, new Bucket([key], [defaultValue]));
+      return defaultValue;
+    } else {
+      const i = bucket.findIndex(key);
+      if (i === null) {
+        bucket.set(key, defaultValue);
+        return defaultValue;
+      } else {
+        return bucket.values[i];
+      }
+    }
+  }
+
   get size(): number {
     return this._size;
   }
